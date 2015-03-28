@@ -1,1 +1,5 @@
 *.swp
+docker-compose.yml
+deploy.sh
+up.sh
+start.sh
