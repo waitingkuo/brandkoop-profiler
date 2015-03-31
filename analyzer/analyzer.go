@@ -20,6 +20,7 @@ var (
 	criteriaTraits map[string][]string
 	traitTerms     map[string][]string
 	allTerms       []string
+	termWeights    map[string]float64
 )
 
 func init() {
@@ -51,6 +52,26 @@ func init() {
 	criteriaTraits = GetAllCriteraTraits()
 	traitTerms = GetAllTraitTerms()
 	allTerms = GetAllTerms()
+	termWeights = GetAllTermWeights()
+}
+
+func GetAllTermWeights() map[string]float64 {
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	ret := make(map[string]float64)
+
+	type Resp struct {
+		Term   string  `bson:"term"`
+		Weight float64 `bson:"weight"`
+	}
+	resp := Resp{}
+	iter := session.DB("brandkoop").C("terms").Find(bson.M{}).Iter()
+	for iter.Next(&resp) {
+		ret[resp.Term] = resp.Weight
+	}
+
+	return ret
 }
 
 func GetAllTraitTerms() map[string][]string {
@@ -147,14 +168,13 @@ func MakeScript(terms []string) string {
 
 	tmpl, err := template.New("script").Parse(
 		`    sum=0; 
-    for (t in [{{range $index, $element := .}}{{if ne $index 0}},{{end}}/{{$element}}/{{end}}])
-      sum += _index['content'][t].tf()
+    for (t in [{{range $index, $element := .}}{{if ne $index 0}},{{end}}/{{$element.Term}}/:{{$element.Weight}}{{end}}])
+      sum += _index['content'][t.key].tf() * t.value
     sum;
     `)
 	/*
-			tmpl, err := template.New("script").Parse(
 				`    sum=0;
-		    for (t in [{{range $index, $element := .Woo}}{{if ne $index 0}},{{end}}'{{$element}}'{{end}}])
+		    for (t in [{{range $index, $element := .}}{{if ne $index 0}},{{end}}/{{$element}}/{{end}}])
 		      sum += _index['content'][t].tf()
 		    sum;
 		    `)
@@ -164,7 +184,15 @@ func MakeScript(terms []string) string {
 	}
 
 	var doc bytes.Buffer
-	tmpl.Execute(&doc, terms)
+	type TermAndWeight struct {
+		Term   string
+		Weight float64
+	}
+	tw := []TermAndWeight{}
+	for _, t := range terms {
+		tw = append(tw, TermAndWeight{t, termWeights[t]})
+	}
+	tmpl.Execute(&doc, tw)
 
 	//println(doc.String())
 

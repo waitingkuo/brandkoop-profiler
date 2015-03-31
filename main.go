@@ -19,6 +19,9 @@ func main() {
 
 		domain := c.Request.Form.Get("domain")
 		domainId := c.Request.Form.Get("domainId")
+
+		log.Printf("[POST] /profiler/profiledomain %s %s\n", domain, domainId)
+
 		if domain == "" {
 			c.String(http.StatusBadRequest, "FAIL")
 		}
@@ -41,7 +44,7 @@ func main() {
 				return
 			}
 
-			crawler.FullCrawl(domain, seed, 100)
+			crawler.FullCrawl(domain, seed, 1)
 			//analyzer.Analyze(domainId, domain)
 
 			log.Println("analyzing", domain.RootDomain)
@@ -59,7 +62,7 @@ func main() {
 	})
 
 	router.GET("/profiler/test", func(c *gin.Context) {
-		analyzer.ComputeCharacter("", "anyperk.com")
+		//analyzer.ComputeCharacter("", "anyperk.com")
 		//analyzer.ComputeValues("anyperk.com")
 		//analyzer.ComputeWordCloud("anyperk.com")
 	})

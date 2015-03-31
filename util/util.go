@@ -64,7 +64,7 @@ func ExtractLinksFromDoc(rootDomain string, currentLink string, doc *goquery.Doc
 		link, _ := s.Attr("href")
 		//log.Println("[ExtractLinksFromDoc] found link", link)
 
-		newURL, _ := u.Parse(link)
+		newURL, err := u.Parse(link)
 		if err != nil {
 			log.Printf("[Util] [ERR]: failed to parse URL %s - %s\n", link, err)
 			return
