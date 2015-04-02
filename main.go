@@ -19,6 +19,7 @@ func main() {
 
 		domain := c.Request.Form.Get("domain")
 		domainId := c.Request.Form.Get("domainId")
+		notCrawl := c.Request.Form.Get("notCrawl")
 
 		log.Printf("[POST] /profiler/profiledomain %s %s\n", domain, domainId)
 
@@ -44,7 +45,9 @@ func main() {
 				return
 			}
 
-			crawler.FullCrawl(domain, seed, 1)
+			if len(notCrawl) == 0 {
+				crawler.FullCrawl(domain, seed, 100)
+			}
 			//analyzer.Analyze(domainId, domain)
 
 			log.Println("analyzing", domain.RootDomain)
