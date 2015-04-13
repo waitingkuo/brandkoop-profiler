@@ -1,0 +1,77 @@
+{
+	"ImportPath": "github.com/waitingkuo/brandkoop-profiler",
+	"GoVersion": "go1.4.2",
+	"Deps": [
+		{
+			"ImportPath": "code.google.com/p/cascadia",
+			"Comment": "null-31",
+			"Rev": "5d796540e3cb93ea0556c897e6a3c7690f614d35"
+		},
+		{
+			"ImportPath": "code.google.com/p/go-charset/charset",
+			"Comment": "null-32",
+			"Rev": "ebbeafdc430eb6c7e44e9a730a38eaff4c56ba3a"
+		},
+		{
+			"ImportPath": "github.com/PuerkitoBio/fetchbot",
+			"Rev": "e4ab2e653fb7f4c543c07347cf374bdbd0909177"
+		},
+		{
+			"ImportPath": "github.com/PuerkitoBio/goquery",
+			"Comment": "v0.3.2-69-g4cf64c5",
+			"Rev": "4cf64c51f7e80d56d9ae2ffe7d684d3dd5dbd5d0"
+		},
+		{
+			"ImportPath": "github.com/advancedlogic/GoOse",
+			"Rev": "2c2390575ca23982af38c4e7f364e7c281a726a5"
+		},
+		{
+			"ImportPath": "github.com/advancedlogic/gojs-config",
+			"Rev": "bff36193fca8bd2f6269e8c4e8c723991fd20565"
+		},
+		{
+			"ImportPath": "github.com/bjarneh/latinx",
+			"Rev": "4dfe9ba2a293f28a5e06fc7ffe56b1d71a47b8c8"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin",
+			"Comment": "v0.6",
+			"Rev": "e2fa89777e344782ef5d31929f095f4589c35dcc"
+		},
+		{
+			"ImportPath": "github.com/julienschmidt/httprouter",
+			"Rev": "f88e0d361fa3ada4c6015805c9131a4e8e956f65"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Rev": "043ae16291351db8465272edf465c9f388161627"
+		},
+		{
+			"ImportPath": "github.com/olivere/elastic",
+			"Comment": "v1-39-gfda69de",
+			"Rev": "fda69ded3720eacdf4180554fec11fc8554c50c6"
+		},
+		{
+			"ImportPath": "github.com/temoto/robotstxt.go",
+			"Rev": "c51489e759bca7dc60d42334436d7fc46b1e96cb"
+		},
+		{
+			"ImportPath": "github.com/waitingkuo/domainutil",
+			"Rev": "b13831546754489b4e22071e25c0dc88408cfd98"
+		},
+		{
+			"ImportPath": "golang.org/x/net/html",
+			"Rev": "c84eff7014eba178f68bd4c05b86780efe0fbf35"
+		},
+		{
+			"ImportPath": "gopkg.in/fatih/set.v0",
+			"Comment": "v0.1.0-3-g27c4092",
+			"Rev": "27c40922c40b43fe04554d8223a402af3ea333f3"
+		},
+		{
+			"ImportPath": "gopkg.in/mgo.v2",
+			"Comment": "r2015.01.24",
+			"Rev": "c6a7dce14133ccac2dcac3793f1d6e2ef048503a"
+		}
+	]
+}
