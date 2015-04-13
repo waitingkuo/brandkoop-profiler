@@ -2,6 +2,7 @@ package es
 
 import (
 	"errors"
+	"fmt"
 	"github.com/olivere/elastic"
 	"github.com/waitingkuo/brandkoop-profiler/util"
 	"github.com/waitingkuo/domainutil"
@@ -23,6 +24,7 @@ func init() {
 		elastic.SetURL(elasticsearchURL),
 	)
 	if err != nil {
+		fmt.Println("cannot connect to" + elasticsearchURL)
 		panic(err)
 	}
 }
