@@ -3,7 +3,8 @@ package analyzer
 import (
 	"bytes"
 	"errors"
-	"github.com/olivere/elastic"
+	//"github.com/olivere/elastic"
+	"github.com/waitingkuo/elastic"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"

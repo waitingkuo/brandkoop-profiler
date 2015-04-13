@@ -3,9 +3,10 @@ package es
 import (
 	"errors"
 	"fmt"
-	"github.com/olivere/elastic"
+	//"github.com/olivere/elastic"
 	"github.com/waitingkuo/brandkoop-profiler/util"
 	"github.com/waitingkuo/domainutil"
+	"github.com/waitingkuo/elastic"
 	"os"
 )
 
