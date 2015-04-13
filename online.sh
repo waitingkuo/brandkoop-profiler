@@ -1,0 +1,1 @@
+ ELASTICSEARCH_URL=http://104.236.140.174:9200 MONGO_URL=mongodb://198.199.106.84:27017 go run main.go
