@@ -16,6 +16,7 @@ var mgoSession *mgo.Session
 
 //var mongoHost = "localhost:3001"
 var (
+	termCriteria   map[string]string
 	criteriaTerms  map[string][]string
 	criteriaTraits map[string][]string
 	traitTerms     map[string][]string
@@ -48,11 +49,31 @@ func init() {
 		panic(err)
 	}
 
+	termCriteria = GetAllTermCriteria()
 	criteriaTerms = GetAllCriteraTerms()
 	criteriaTraits = GetAllCriteraTraits()
 	traitTerms = GetAllTraitTerms()
 	allTerms = GetAllTerms()
 	termWeights = GetAllTermWeights()
+}
+
+func GetAllTermCriteria() map[string]string {
+	session := mgoSession.Copy()
+	defer session.Close()
+
+	ret := make(map[string]string)
+
+	type Resp struct {
+		Term     string `bson:"term"`
+		Criteria string `bson:"criteria"`
+	}
+	resp := Resp{}
+	iter := session.DB("brandkoop").C("terms").Find(bson.M{}).Iter()
+	for iter.Next(&resp) {
+		ret[resp.Term] = resp.Criteria
+	}
+
+	return ret
 }
 
 func GetAllTermWeights() map[string]float64 {
@@ -312,8 +333,9 @@ func ComputeWordCloud(domainId string, rootDomain string) {
 		}
 	*/
 	type Word struct {
-		Text string `bson:"text"`
-		Size int    `bson:"size"`
+		Text     string `bson:"text"`
+		Size     int    `bson:"size"`
+		Criteria string `bson:"criteria"`
 	}
 	words := []Word{}
 	for term, _ := range myTerms {
@@ -322,7 +344,7 @@ func ComputeWordCloud(domainId string, rootDomain string) {
 		if count == 0 {
 			continue
 		}
-		words = append(words, Word{term, count})
+		words = append(words, Word{term, count, termCriteria[term]})
 	}
 	mgoUpdate := bson.M{
 		"$set": bson.M{"words": words},
