@@ -36,6 +36,7 @@ func main() {
 			resp, err := http.Head("http://" + domain)
 			if err != nil {
 				log.Printf("[Err] Head %s: %s", seed, err)
+				return
 			}
 			seed := resp.Request.URL.String()
 
