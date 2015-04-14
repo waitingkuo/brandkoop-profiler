@@ -57,7 +57,7 @@ func ExtractLinksFromDoc(rootDomain string, currentLink string, doc *goquery.Doc
 	links := []string{}
 	u, err := url.Parse(currentLink)
 	if err != nil {
-		log.Printf("[Util] [ERR]: resolve URL %s - %s\n", currentLink, err)
+		log.Printf("[Util] [WARNING]: resolve URL %s - %s\n", currentLink, err)
 		return []string{}, err
 	}
 
@@ -67,13 +67,13 @@ func ExtractLinksFromDoc(rootDomain string, currentLink string, doc *goquery.Doc
 
 		newURL, err := u.Parse(link)
 		if err != nil {
-			log.Printf("[Util] [ERR]: failed to parse URL %s - %s\n", link, err)
+			log.Printf("[Util] [WARNING]: failed to parse URL %s - %s\n", link, err)
 			return
 		}
 
 		domain, err := domainutil.ParseFromURL(newURL)
 		if err != nil {
-			log.Printf("[Util] [ERR]: Failed to parse  %s - %s\n", newURL.String(), err)
+			log.Printf("[Util] [WARNING]: Failed to parse  %s - %s\n", newURL.String(), err)
 			return
 		}
 
