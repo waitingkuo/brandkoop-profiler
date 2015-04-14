@@ -3,8 +3,8 @@ package analyzer
 import (
 	"bytes"
 	"errors"
-	//"github.com/olivere/elastic"
-	"github.com/waitingkuo/elastic"
+	"github.com/olivere/elastic"
+	//"github.com/waitingkuo/elastic"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -40,6 +40,7 @@ func init() {
 	var err error
 	esClient, err = elastic.NewClient(
 		elastic.SetURL(elasticsearchURL),
+		elastic.SetSniff(false),
 	)
 	if err != nil {
 		panic(err)

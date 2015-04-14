@@ -3,10 +3,10 @@ package es
 import (
 	"errors"
 	"fmt"
-	//"github.com/olivere/elastic"
+	"github.com/olivere/elastic"
 	"github.com/waitingkuo/brandkoop-profiler/util"
 	"github.com/waitingkuo/domainutil"
-	"github.com/waitingkuo/elastic"
+	//"github.com/waitingkuo/elastic"
 	"os"
 )
 
@@ -23,6 +23,7 @@ func init() {
 	var err error
 	esClient, err = elastic.NewClient(
 		elastic.SetURL(elasticsearchURL),
+		elastic.SetSniff(false),
 	)
 	if err != nil {
 		fmt.Println("cannot connect to" + elasticsearchURL)
