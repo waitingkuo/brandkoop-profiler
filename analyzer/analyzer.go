@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/olivere/elastic"
+	"time"
 	//"github.com/waitingkuo/elastic"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -41,6 +42,7 @@ func init() {
 	esClient, err = elastic.NewClient(
 		elastic.SetURL(elasticsearchURL),
 		elastic.SetSniff(false),
+		elastic.SetHealthcheckTimeout(time.Second*10),
 	)
 	if err != nil {
 		panic(err)
