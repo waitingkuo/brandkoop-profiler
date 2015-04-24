@@ -6,6 +6,7 @@ import (
 	"github.com/olivere/elastic"
 	"time"
 	//"github.com/waitingkuo/elastic"
+	"github.com/waitingkuo/brandkoop-profiler/util"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
@@ -189,12 +190,22 @@ func GetAllCriteraTerms() map[string][]string {
 
 }
 
-func MakeScript(terms []string) string {
+func MakeScript(terms []string, weightedUrls []string) string {
 
+	weightedDocIds := []string{}
+	for _, url := range weightedUrls {
+		weightedDocIds = append(weightedDocIds, util.Hash(url))
+	}
 	tmpl, err := template.New("script").Parse(
 		`    sum=0; 
-    for (t in [{{range $index, $element := .}}{{if ne $index 0}},{{end}}/{{$element.Term}}/:{{$element.Weight}}{{end}}])
-      sum += _index['content'][t.key].tf() * t.value
+    docId = doc["_uid"].value.split("#")[1]
+    for (t in [{{range $index, $element := .TermWeight}}{{if ne $index 0}},{{end}}/{{$element.Term}}/:{{$element.Weight}}{{end}}])
+      if ([{{range $index2, $docId := .WeightedDocIds}}{{if ne $index2 0}},{{end}}"{{$docId}}"{{end}}].contains(docId)) {
+        sum += _index['content'][t.key].tf() * t.value * 10
+      }
+      else {
+        sum += _index['content'][t.key].tf() * t.value
+      }
     sum;
     `)
 	/*
@@ -217,14 +228,19 @@ func MakeScript(terms []string) string {
 	for _, t := range terms {
 		tw = append(tw, TermAndWeight{t, termWeights[t]})
 	}
-	tmpl.Execute(&doc, tw)
+	type Params struct {
+		TermWeight     []TermAndWeight
+		WeightedDocIds []string
+	}
+	params := Params{tw, weightedDocIds}
+	tmpl.Execute(&doc, params)
 
 	//println(doc.String())
 
 	return doc.String()
 }
 
-func TermFrequencyQuery(rootDomain string, termsMap map[string][]string) (*elastic.SearchResult, error) {
+func TermFrequencyQuery(rootDomain string, termsMap map[string][]string, weightedUrls []string) (*elastic.SearchResult, error) {
 
 	termQuery := elastic.NewTermQuery("rootDomain", rootDomain)
 
@@ -234,7 +250,7 @@ func TermFrequencyQuery(rootDomain string, termsMap map[string][]string) (*elast
 		Query(&termQuery)
 
 	for field, terms := range termsMap {
-		sumAggr := elastic.NewSumAggregation().Script(MakeScript(terms))
+		sumAggr := elastic.NewSumAggregation().Script(MakeScript(terms, weightedUrls))
 		searchService = searchService.Aggregation(field, sumAggr)
 	}
 
@@ -242,8 +258,8 @@ func TermFrequencyQuery(rootDomain string, termsMap map[string][]string) (*elast
 
 }
 
-func ComputeCharacter(domainId string, rootDomain string) {
-	result, err := TermFrequencyQuery(rootDomain, criteriaTerms)
+func ComputeCharacter(domainId string, rootDomain string, weightedUrls []string) {
+	result, err := TermFrequencyQuery(rootDomain, criteriaTerms, weightedUrls)
 	if err != nil {
 		log.Printf("[Analyzer] [ERR] failed to compute character for domain: %s", err)
 		return
@@ -261,8 +277,8 @@ func ComputeCharacter(domainId string, rootDomain string) {
 	session.DB("meteor").C("characters").Update(bson.M{"domainId": domainId}, mgoUpdate)
 }
 
-func ComputeValues(domainId string, rootDomain string) {
-	result, err := TermFrequencyQuery(rootDomain, traitTerms)
+func ComputeValues(domainId string, rootDomain string, weightedUrls []string) {
+	result, err := TermFrequencyQuery(rootDomain, traitTerms, weightedUrls)
 	if err != nil {
 		log.Printf("[Analyzer] [ERR] failed to compute values for domain: %s", err)
 		return
@@ -310,14 +326,14 @@ func ComputeValues(domainId string, rootDomain string) {
 	session.DB("meteor").C("values").Update(bson.M{"domainId": domainId}, mgoUpdate)
 }
 
-func ComputeWordCloud(domainId string, rootDomain string) {
+func ComputeWordCloud(domainId string, rootDomain string, weightedUrls []string) {
 	//FIXME a hack
 	myTerms := make(map[string][]string)
 	for _, t := range allTerms {
 		myTerms[t] = []string{t}
 	}
 
-	result, err := TermFrequencyQuery(rootDomain, myTerms)
+	result, err := TermFrequencyQuery(rootDomain, myTerms, weightedUrls)
 	if err != nil {
 		log.Printf("[Analyzer] [ERR] failed to compute word cloud for domain: %s", err)
 		return

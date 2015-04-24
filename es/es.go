@@ -39,6 +39,7 @@ type Page struct {
 	SubDomain  string `json":subDomain"`
 	Url        string `json:"url"`
 	Content    string `json:"content"`
+	PageWeight int    `json:"pageWeight"`
 }
 
 func IndexPage(domain *domainutil.Domain, url string, content string) error {
@@ -51,6 +52,7 @@ func IndexPage(domain *domainutil.Domain, url string, content string) error {
 		SubDomain:  domain.SubDomain,
 		Url:        url,
 		Content:    content,
+		PageWeight: 1,
 	}
 
 	_, err := esClient.Index().

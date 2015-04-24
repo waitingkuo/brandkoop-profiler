@@ -20,6 +20,7 @@ func main() {
 		domain := c.Request.Form.Get("domain")
 		domainId := c.Request.Form.Get("domainId")
 		notCrawl := c.Request.Form.Get("notCrawl")
+		weightedUrls := c.Request.Form["weightedUrls"]
 
 		log.Printf("[POST] /profiler/profiledomain %s %s\n", domain, domainId)
 
@@ -47,13 +48,13 @@ func main() {
 			}
 
 			if len(notCrawl) == 0 {
-				crawler.FullCrawl(domain, seed, 100)
+				crawler.FullCrawl(domain, seed, 2)
 			}
 			//analyzer.Analyze(domainId, domain)
 
 			log.Println("analyzing", domain.RootDomain)
 			log.Println("computing character...")
-			analyzer.ComputeCharacter(domainId, domain.RootDomain)
+			analyzer.ComputeCharacter(domainId, domain.RootDomain, weightedUrls)
 			log.Println("computing value...")
 			analyzer.ComputeValues(domainId, domain.RootDomain)
 			log.Println("computing wordcloud...")
