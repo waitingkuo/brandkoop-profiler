@@ -8,6 +8,7 @@ import (
 	"github.com/waitingkuo/domainutil"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func main() {
@@ -47,8 +48,21 @@ func main() {
 				return
 			}
 
+			//FIXME implement a single crawl method
+			for _, weightedUrl := range weightedUrls {
+				weightedUrl := strings.TrimRight(weightedUrl, "/")
+				resp, err := http.Head(weightedUrl)
+				if err != nil {
+					log.Printf("[Err] Head %s: %s", seed, err)
+					//return
+					continue
+				}
+				u := resp.Request.URL.String()
+				crawler.FullCrawl(domain, u, 1)
+			}
+
 			if len(notCrawl) == 0 {
-				crawler.FullCrawl(domain, seed, 2)
+				crawler.FullCrawl(domain, seed, 100)
 			}
 			//analyzer.Analyze(domainId, domain)
 
