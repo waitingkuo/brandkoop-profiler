@@ -56,9 +56,9 @@ func main() {
 			log.Println("computing character...")
 			analyzer.ComputeCharacter(domainId, domain.RootDomain, weightedUrls)
 			log.Println("computing value...")
-			analyzer.ComputeValues(domainId, domain.RootDomain)
+			analyzer.ComputeValues(domainId, domain.RootDomain, weightedUrls)
 			log.Println("computing wordcloud...")
-			analyzer.ComputeWordCloud(domainId, domain.RootDomain)
+			analyzer.ComputeWordCloud(domainId, domain.RootDomain, weightedUrls)
 			log.Println("analyze done...")
 
 		}()
