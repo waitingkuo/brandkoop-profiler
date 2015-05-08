@@ -80,6 +80,12 @@ func main() {
 		c.String(http.StatusOK, "OK")
 	})
 
+	router.GET("/profiler/twitter/:screenName/character", func(c *gin.Context) {
+		screenName := c.Params.ByName("screenName")
+		character, wordfrequency, _ := analyzer.ComputeTweetCharacter(screenName)
+		c.JSON(http.StatusOK, gin.H{"character": character, "wordfrequency": wordfrequency})
+	})
+
 	router.GET("/profiler/test", func(c *gin.Context) {
 		//analyzer.ComputeCharacter("", "anyperk.com")
 		//analyzer.ComputeValues("anyperk.com")

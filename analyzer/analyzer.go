@@ -3,7 +3,9 @@ package analyzer
 import (
 	"bytes"
 	"errors"
+	"github.com/ChimeraCoder/anaconda"
 	"github.com/olivere/elastic"
+	"net/url"
 	"time"
 	//"github.com/waitingkuo/elastic"
 	"github.com/waitingkuo/brandkoop-profiler/util"
@@ -11,6 +13,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"os"
+	"regexp"
 	"text/template"
 )
 
@@ -19,18 +22,27 @@ var mgoSession *mgo.Session
 
 //var mongoHost = "localhost:3001"
 var (
-	termCriteria   map[string]string
-	criteriaTerms  map[string][]string
-	criteriaTraits map[string][]string
-	traitTerms     map[string][]string
-	allTerms       []string
-	termWeights    map[string]float64
+	termCriteria             map[string]string
+	criteriaTerms            map[string][]string
+	criteriaTraits           map[string][]string
+	traitTerms               map[string][]string
+	allTerms                 []string
+	termWeights              map[string]float64
+	twitterConsumerKey       string
+	twitterConsumerSecret    string
+	twitterAccessToken       string
+	twitterAccessTokenSecret string
 )
 
 func init() {
 
 	elasticsearchURL := os.Getenv("ELASTICSEARCH_URL")
 	mongoURL := os.Getenv("MONGO_URL")
+
+	twitterConsumerKey = os.Getenv("TWITTER_CONSUMER_KEY")
+	twitterConsumerSecret = os.Getenv("TWITTER_CONSUMER_SECRET")
+	twitterAccessToken = os.Getenv("TWITTER_ACESS_TOKEN")
+	twitterAccessTokenSecret = os.Getenv("TWITTER_ACESS_TOKEN_SECRET")
 
 	if elasticsearchURL == "" {
 		panic(errors.New("No ELASTICSEARCH_URL"))
@@ -275,6 +287,39 @@ func ComputeCharacter(domainId string, rootDomain string, weightedUrls []string)
 	session := mgoSession.Copy()
 	defer session.Close()
 	session.DB("meteor").C("characters").Update(bson.M{"domainId": domainId}, mgoUpdate)
+}
+
+func ComputeTweetCharacter(screenName string) (map[string]int, map[string]int, error) {
+	anaconda.SetConsumerKey(twitterConsumerKey)
+	anaconda.SetConsumerSecret(twitterConsumerSecret)
+	api := anaconda.NewTwitterApi(twitterAccessToken, twitterAccessTokenSecret)
+	values := make(url.Values)
+	values.Add("screen_name", screenName)
+	values.Add("count", "200")
+	timeline, err := api.GetUserTimeline(values)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	wordFrequency := make(map[string]int)
+	for _, tweet := range timeline {
+		words := regexp.MustCompile(" +").Split(tweet.Text, -1)
+		for _, word := range words {
+			if termWeights[word] > 0 {
+				wordFrequency[word] += 1
+			}
+		}
+	}
+	characterScores := make(map[string]int)
+	for criteria, terms := range criteriaTerms {
+		freq := 0.0
+		for _, term := range terms {
+			freq += termWeights[term] * float64(wordFrequency[term])
+		}
+		characterScores[criteria] = int(freq)
+	}
+
+	return characterScores, wordFrequency, nil
 }
 
 func ComputeValues(domainId string, rootDomain string, weightedUrls []string) {
