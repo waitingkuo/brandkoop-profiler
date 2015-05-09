@@ -6,6 +6,7 @@ import (
 	"github.com/ChimeraCoder/anaconda"
 	"github.com/olivere/elastic"
 	"net/url"
+	"strconv"
 	"time"
 	//"github.com/waitingkuo/elastic"
 	"github.com/waitingkuo/brandkoop-profiler/util"
@@ -293,23 +294,49 @@ func ComputeTweetCharacter(screenName string) (map[string]int, map[string]int, e
 	anaconda.SetConsumerKey(twitterConsumerKey)
 	anaconda.SetConsumerSecret(twitterConsumerSecret)
 	api := anaconda.NewTwitterApi(twitterAccessToken, twitterAccessTokenSecret)
-	values := make(url.Values)
-	values.Add("screen_name", screenName)
-	values.Add("count", "200")
-	timeline, err := api.GetUserTimeline(values)
-	if err != nil {
-		return nil, nil, err
-	}
 
 	wordFrequency := make(map[string]int)
-	for _, tweet := range timeline {
-		words := regexp.MustCompile(" +").Split(tweet.Text, -1)
-		for _, word := range words {
-			if termWeights[word] > 0 {
-				wordFrequency[word] += 1
+
+	isFirst := true
+	var lastMinId int64 = -1
+	for true {
+		values := make(url.Values)
+		values.Add("screen_name", screenName)
+		values.Add("count", "200")
+		if !isFirst {
+			values.Add("max_id", strconv.FormatInt(lastMinId, 10))
+		}
+
+		timeline, err := api.GetUserTimeline(values)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		if isFirst {
+			if len(timeline) == 0 {
+				break
+			}
+		} else {
+			if len(timeline) == 0 || len(timeline) == 1 {
+				break
+			}
+			timeline = timeline[1:]
+		}
+
+		for _, tweet := range timeline {
+			words := regexp.MustCompile(" +").Split(tweet.Text, -1)
+			for _, word := range words {
+				if termWeights[word] > 0 {
+					wordFrequency[word] += 1
+				}
 			}
 		}
+
+		lastMinId = timeline[len(timeline)-1].Id
+
+		isFirst = false
 	}
+
 	characterScores := make(map[string]int)
 	for criteria, terms := range criteriaTerms {
 		freq := 0.0
