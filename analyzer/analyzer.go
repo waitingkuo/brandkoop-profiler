@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 	//"github.com/waitingkuo/elastic"
+	"fmt"
+	"github.com/waitingkuo/brandkoop-profiler/es"
 	"github.com/waitingkuo/brandkoop-profiler/util"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -445,4 +447,127 @@ func ComputeWordCloud(domainId string, rootDomain string, weightedUrls []string)
 	session := mgoSession.Copy()
 	defer session.Close()
 	session.DB("meteor").C("wordclouds").Update(bson.M{"domainId": domainId}, mgoUpdate)
+}
+
+/*
+ * V2
+ */
+func GetDomainTermFrequency(rootDomain string, weightedUrls []string) map[string]float64 {
+	//termWeight
+	termFreq := make(map[string]float64)
+
+	weightedDocIds := make(map[string]int)
+	for _, u := range weightedUrls {
+		weightedDocIds[util.Hash(u)] = 10
+	}
+
+	//fmt.Println(termWeights)
+
+	docIds := es.GetIdsByRootDomain(rootDomain)
+	for _, docId := range docIds {
+		vector := es.GetTermVectorById(docId)
+		docWeight := 1
+		weightedDocWeight, ok := weightedDocIds[docId]
+		if ok {
+			docWeight = weightedDocWeight
+		}
+		for term, freq := range vector {
+			termWeight, ok := termWeights[term]
+			if ok {
+				termFreq[term] += float64(freq) * float64(docWeight) * termWeight
+			}
+		}
+	}
+
+	return termFreq
+}
+
+func ComputeCharacterV2(domainId string, termFreq map[string]float64) {
+
+	mgoUpdate := bson.M{"$set": bson.M{}}
+	for criteria, terms := range criteriaTerms {
+		freq := 0.0
+		for _, term := range terms {
+			f, ok := termFreq[term]
+			if ok {
+				freq += f
+			}
+		}
+		mgoUpdate["$set"].(bson.M)[criteria] = freq
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("characters").Update(bson.M{"domainId": domainId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+
+func ComputeValuesV2(domainId string, termFreq map[string]float64) {
+
+	type TraitScore struct {
+		Criteria  string `bson:"criteria"`
+		Trait     string `bson:"trait"`
+		Frequency int    `bson:"frequency"`
+	}
+	traitScores := []TraitScore{}
+	for criteria, traits := range criteriaTerms {
+		for _, trait := range traits {
+			freq := 0.0
+			for _, term := range traitTerms[trait] {
+				f, ok := termFreq[term]
+				if ok {
+					freq += f
+				}
+			}
+			if int(freq) > 0 {
+				traitScores = append(traitScores, TraitScore{
+					Criteria:  criteria,
+					Trait:     trait,
+					Frequency: int(freq),
+				})
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{
+			"traits": traitScores,
+		},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("values").Update(bson.M{"domainId": domainId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+
+}
+
+type Word struct {
+	Term     string `bson:"term"`
+	Freq     int    `bson:"freq"`
+	Criteria string `bson:"criteria"`
+}
+
+func ComputeWordcloudV2(domainId string, termFreq map[string]float64) {
+
+	words := []Word{}
+	for criteria, terms := range criteriaTerms {
+		for _, term := range terms {
+			freq, ok := termFreq[term]
+			if ok {
+				if int(freq) > 0 {
+					words = append(words, Word{term, int(freq), criteria})
+				}
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{"words": words},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("wordclouds").Update(bson.M{"domainId": domainId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+
 }

@@ -3,8 +3,10 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	//"net/url"
+	"fmt"
 	"github.com/waitingkuo/brandkoop-profiler/analyzer"
 	"github.com/waitingkuo/brandkoop-profiler/crawler"
+	//"github.com/waitingkuo/brandkoop-profiler/es"
 	"github.com/waitingkuo/domainutil"
 	"log"
 	"net/http"
@@ -14,6 +16,103 @@ import (
 func main() {
 
 	router := gin.Default()
+
+	router.POST("/v2/cralwer/crawldomain", func(c *gin.Context) {
+
+		//c.Request.ParseForm()
+
+		//domain := c.Request.Form.Get("domain")
+		//domainId := c.Request.Form.Get("domainId")
+		//weightedUrls := c.Request.Form["weightedUrls"]
+
+		//domain := c.Request
+	})
+	router.GET("/v2/test", func(c *gin.Context) {
+		rootDomain := "bluenile.com"
+		tf := analyzer.GetDomainTermFrequency(rootDomain, []string{})
+		fmt.Println(tf)
+	})
+	router.POST("/v2/crawler/crawldomain", func(c *gin.Context) {
+		c.Request.ParseForm()
+
+		//rawDomain := c.Request.Form.Get("domain")
+		//domainId := c.Request.Form.Get("domainId")
+		//domain, err := domainutil.ParseFromHost(rawDomain)
+		go func() {
+		}()
+	})
+	router.POST("/v2/analyzer/analyzedomain", func(c *gin.Context) {
+		c.Request.ParseForm()
+
+		rawDomain := c.Request.Form.Get("domain")
+		domainId := c.Request.Form.Get("domainId")
+		domain, err := domainutil.ParseFromHost(rawDomain)
+		if err != nil {
+			fmt.Println("[ERROR] failed to parse domain ", rawDomain)
+			return
+		}
+		//weightedUrls := c.Request.Form["weightedUrls"]
+		go func() {
+			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			analyzer.ComputeCharacterV2(domainId, termFreq)
+			analyzer.ComputeValuesV2(domainId, termFreq)
+			analyzer.ComputeWordcloudV2(domainId, termFreq)
+		}()
+	})
+	router.POST("/v2/profiler/profiledomain", func(c *gin.Context) {
+		c.Request.ParseForm()
+
+		rawDomain := c.Request.Form.Get("domain")
+		domainId := c.Request.Form.Get("domainId")
+		domain, err := domainutil.ParseFromHost(rawDomain)
+		if err != nil {
+			fmt.Println("[ERROR] failed to parse domain ", rawDomain)
+			return
+		}
+		fmt.Println(domain)
+		go func() {
+			//crawl FIXME to move to another function
+			seed := "http://" + rawDomain
+			resp, err := http.Head("http://" + rawDomain)
+			if err != nil {
+				log.Printf("[Err] Head %s: %s", seed, err)
+				return
+			}
+			seed = resp.Request.URL.String()
+
+			domain, err := domainutil.ParseFromRawURL(seed)
+			if err != nil {
+				log.Printf("[Err] Failed to parse seed %s: %s", seed, err)
+				return
+			}
+
+			//FIXME implement a single crawl method
+			/*
+				for _, weightedUrl := range weightedUrls {
+					weightedUrl := strings.TrimRight(weightedUrl, "/")
+					resp, err := http.Head(weightedUrl)
+					if err != nil {
+						log.Printf("[Err] Head %s: %s", seed, err)
+						//return
+						continue
+					}
+					u := resp.Request.URL.String()
+					crawler.FullCrawl(domain, u, 1)
+				}
+			*/
+			crawler.FullCrawl(domain, seed, 100)
+
+			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			analyzer.ComputeCharacterV2(domainId, termFreq)
+			analyzer.ComputeValuesV2(domainId, termFreq)
+			analyzer.ComputeWordcloudV2(domainId, termFreq)
+		}()
+	})
+
+	/*******************
+	 * v1 (lagaxy)     *
+	 *******************/
+
 	router.POST("/profiler/profiledomain", func(c *gin.Context) {
 
 		c.Request.ParseForm()
