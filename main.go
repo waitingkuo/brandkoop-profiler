@@ -54,11 +54,33 @@ func main() {
 		//weightedUrls := c.Request.Form["weightedUrls"]
 		go func() {
 			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			fmt.Println("Analyzing Domain Character ...")
 			analyzer.ComputeCharacterV2(domainId, termFreq)
+			fmt.Println("Analyzing Domain Values ...")
 			analyzer.ComputeValuesV2(domainId, termFreq)
+			fmt.Println("Analyzing Domain Wordcloud ...")
 			analyzer.ComputeWordcloudV2(domainId, termFreq)
+			fmt.Println("Done ...")
 		}()
 	})
+
+	router.POST("/v2/profiler/profiletwitter", func(c *gin.Context) {
+		c.Request.ParseForm()
+
+		twitterId := c.Request.Form.Get("twitterId")
+		screenName := c.Request.Form.Get("screenName")
+
+		termFreq := analyzer.GetTwitterTermFrequency(screenName)
+		fmt.Println("Analyzing Twitter Character ...")
+		analyzer.ComputeTwitterCharacterV2(twitterId, termFreq)
+		fmt.Println("Analyzing Twitter Values ...")
+		analyzer.ComputeTwitterValuesV2(twitterId, termFreq)
+		fmt.Println("Analyzing Twitter Wordcloud ...")
+		analyzer.ComputeTwitterWordcloudV2(twitterId, termFreq)
+		fmt.Println("Analyzing Done ...")
+
+	})
+
 	router.POST("/v2/profiler/profiledomain", func(c *gin.Context) {
 		c.Request.ParseForm()
 

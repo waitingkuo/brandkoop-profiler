@@ -452,6 +452,58 @@ func ComputeWordCloud(domainId string, rootDomain string, weightedUrls []string)
 /*
  * V2
  */
+func GetTwitterTermFrequency(screenName string) map[string]float64 {
+
+	anaconda.SetConsumerKey(twitterConsumerKey)
+	anaconda.SetConsumerSecret(twitterConsumerSecret)
+	api := anaconda.NewTwitterApi(twitterAccessToken, twitterAccessTokenSecret)
+	termFreq := make(map[string]float64)
+
+	isFirst := true
+	var lastMinId int64 = -1
+	for true {
+		values := make(url.Values)
+		values.Add("screen_name", screenName)
+		values.Add("count", "200")
+		if !isFirst {
+			values.Add("max_id", strconv.FormatInt(lastMinId, 10))
+		}
+
+		timeline, err := api.GetUserTimeline(values)
+		if err != nil {
+			//FIXME
+			return nil
+		}
+
+		if isFirst {
+			if len(timeline) == 0 {
+				break
+			}
+		} else {
+			if len(timeline) == 0 || len(timeline) == 1 {
+				break
+			}
+			timeline = timeline[1:]
+		}
+
+		for _, tweet := range timeline {
+			words := regexp.MustCompile(" +").Split(tweet.Text, -1)
+			for _, word := range words {
+				termWeight, ok := termWeights[word]
+				if ok {
+					termFreq[word] += termWeight
+				}
+			}
+		}
+
+		lastMinId = timeline[len(timeline)-1].Id
+
+		isFirst = false
+	}
+
+	return termFreq
+
+}
 func GetDomainTermFrequency(rootDomain string, weightedUrls []string) map[string]float64 {
 	//termWeight
 	termFreq := make(map[string]float64)
@@ -502,6 +554,26 @@ func ComputeCharacterV2(domainId string, termFreq map[string]float64) {
 	fmt.Println(mgoUpdate)
 
 }
+func ComputeTwitterCharacterV2(twitterId string, termFreq map[string]float64) {
+
+	mgoUpdate := bson.M{"$set": bson.M{}}
+	for criteria, terms := range criteriaTerms {
+		freq := 0.0
+		for _, term := range terms {
+			f, ok := termFreq[term]
+			if ok {
+				freq += f
+			}
+		}
+		mgoUpdate["$set"].(bson.M)[criteria] = freq
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("twitterCharacters").Update(bson.M{"twitterId": twitterId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
 
 func ComputeValuesV2(domainId string, termFreq map[string]float64) {
 
@@ -538,7 +610,45 @@ func ComputeValuesV2(domainId string, termFreq map[string]float64) {
 	session := mgoSession.Copy()
 	defer session.Close()
 	session.DB("meteor").C("values").Update(bson.M{"domainId": domainId}, mgoUpdate)
-	//fmt.Println(mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+func ComputeTwitterValuesV2(twitterId string, termFreq map[string]float64) {
+
+	type TraitScore struct {
+		Criteria  string `bson:"criteria"`
+		Trait     string `bson:"trait"`
+		Frequency int    `bson:"frequency"`
+	}
+	traitScores := []TraitScore{}
+	for criteria, traits := range criteriaTerms {
+		for _, trait := range traits {
+			freq := 0.0
+			for _, term := range traitTerms[trait] {
+				f, ok := termFreq[term]
+				if ok {
+					freq += f
+				}
+			}
+			if int(freq) > 0 {
+				traitScores = append(traitScores, TraitScore{
+					Criteria:  criteria,
+					Trait:     trait,
+					Frequency: int(freq),
+				})
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{
+			"traits": traitScores,
+		},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("twitterValues").Update(bson.M{"twitterId": twitterId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
 
 }
 
@@ -568,6 +678,29 @@ func ComputeWordcloudV2(domainId string, termFreq map[string]float64) {
 	session := mgoSession.Copy()
 	defer session.Close()
 	session.DB("meteor").C("wordclouds").Update(bson.M{"domainId": domainId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+
+}
+func ComputeTwitterWordcloudV2(twitterId string, termFreq map[string]float64) {
+
+	words := []Word{}
+	for criteria, terms := range criteriaTerms {
+		for _, term := range terms {
+			freq, ok := termFreq[term]
+			if ok {
+				if int(freq) > 0 {
+					words = append(words, Word{term, int(freq), criteria})
+				}
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{"words": words},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("twitterWordclouds").Update(bson.M{"twitterId": twitterId}, mgoUpdate)
 	//fmt.Println(mgoUpdate)
 
 }
