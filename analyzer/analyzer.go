@@ -621,7 +621,7 @@ func ComputeTwitterValuesV2(twitterId string, termFreq map[string]float64) {
 		Frequency int    `bson:"frequency"`
 	}
 	traitScores := []TraitScore{}
-	for criteria, traits := range criteriaTerms {
+	for criteria, traits := range criteriaTraits {
 		for _, trait := range traits {
 			freq := 0.0
 			for _, term := range traitTerms[trait] {
