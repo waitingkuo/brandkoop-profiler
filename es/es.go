@@ -48,7 +48,7 @@ type Page struct {
 //func GetTermVector(domain *domainutil.Domain, url string) {
 func GetIdsByRootDomain(rootDomain string) []string {
 
-	query := elastic.NewTermQuery("rootDomain", rootDomain)
+	query := elastic.NewMatchQuery("rootDomain", rootDomain)
 	result, err := esClient.Search().
 		Index("profiler").
 		Type("page").

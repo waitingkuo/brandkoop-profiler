@@ -57,11 +57,11 @@ func main() {
 		//weightedUrls := c.Request.Form["weightedUrls"]
 		go func() {
 			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
-			fmt.Println("Analyzing Domain Character ...")
+			fmt.Println("Analyzing Domain Character ...", domain.RootDomain)
 			analyzer.ComputeCharacterV2(domainId, termFreq)
-			fmt.Println("Analyzing Domain Values ...")
+			fmt.Println("Analyzing Domain Values ...", domain.RootDomain)
 			analyzer.ComputeValuesV2(domainId, termFreq)
-			fmt.Println("Analyzing Domain Wordcloud ...")
+			fmt.Println("Analyzing Domain Wordcloud ...", domain.RootDomain)
 			analyzer.ComputeWordcloudV2(domainId, termFreq)
 			fmt.Println("Done ...")
 		}()
