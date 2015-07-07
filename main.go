@@ -28,9 +28,12 @@ func main() {
 		//domain := c.Request
 	})
 	router.GET("/v2/test", func(c *gin.Context) {
-		rootDomain := "bluenile.com"
-		tf := analyzer.GetDomainTermFrequency(rootDomain, []string{})
-		fmt.Println(tf)
+		domain, _ := domainutil.ParseFromHost("pic-collage.com")
+		seed := "http://pic-collage.com"
+		crawler.FullCrawl(domain, seed, 100)
+		//rootDomain := "bluenile.com"
+		//tf := analyzer.GetDomainTermFrequency(rootDomain, []string{})
+		//fmt.Println(tf)
 	})
 	router.POST("/v2/crawler/crawldomain", func(c *gin.Context) {
 		c.Request.ParseForm()
@@ -124,9 +127,13 @@ func main() {
 			*/
 			crawler.FullCrawl(domain, seed, 100)
 
+			fmt.Println("Get domain term frequceny ...", domain.RootDomain)
 			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			fmt.Println("Analyzing Website Character ...", domain.RootDomain)
 			analyzer.ComputeCharacterV2(domainId, termFreq)
+			fmt.Println("Analyzing Website Values ... ", domain.RootDomain)
 			analyzer.ComputeValuesV2(domainId, termFreq)
+			fmt.Println("Analyzing Website Cloud ...", domain.RootDomain)
 			analyzer.ComputeWordcloudV2(domainId, termFreq)
 		}()
 	})
