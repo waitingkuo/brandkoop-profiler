@@ -17,30 +17,82 @@ func main() {
 
 	router := gin.Default()
 
-	router.POST("/v2/cralwer/crawldomain", func(c *gin.Context) {
+	/*
+	 * V3
+	 */
+	router.POST("/v3/analyzer/analyzewebsite", func(c *gin.Context) {
+		c.Request.ParseForm()
 
-		//c.Request.ParseForm()
-
-		//domain := c.Request.Form.Get("domain")
-		//domainId := c.Request.Form.Get("domainId")
+		rawDomain := c.Request.Form.Get("domain")
+		websiteId := c.Request.Form.Get("websiteId")
+		domain, err := domainutil.ParseFromHost(rawDomain)
+		if err != nil {
+			fmt.Println("[ERROR] failed to parse domain ", rawDomain)
+			return
+		}
 		//weightedUrls := c.Request.Form["weightedUrls"]
+		go func() {
+			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			fmt.Println("Analyzing Website Character ...", domain.RootDomain)
+			analyzer.ComputeWebsiteCharacterV3(websiteId, termFreq)
+			fmt.Println("Analyzing Website Values ... ", domain.RootDomain)
+			analyzer.ComputeWebsiteValuesV3(websiteId, termFreq)
+			fmt.Println("Analyzing Website Cloud ...", domain.RootDomain)
+			analyzer.ComputeWebsiteWordcloudV3(websiteId, termFreq)
+			fmt.Println("Done ...")
+		}()
+	})
+	router.POST("/v3/profiler/profilewebsite", func(c *gin.Context) {
+		c.Request.ParseForm()
 
-		//domain := c.Request
+		rawDomain := c.Request.Form.Get("domain")
+		websiteId := c.Request.Form.Get("websiteId")
+		domain, err := domainutil.ParseFromHost(rawDomain)
+		if err != nil {
+			fmt.Println("[ERROR] failed to parse domain ", rawDomain)
+			return
+		}
+		fmt.Println(domain)
+		go func() {
+			//crawl FIXME to move to another function
+			seed := "http://" + rawDomain
+			resp, err := http.Head("http://" + rawDomain)
+			if err != nil {
+				log.Printf("[Err] Head %s: %s", seed, err)
+				return
+			}
+			seed = resp.Request.URL.String()
+
+			domain, err := domainutil.ParseFromRawURL(seed)
+			if err != nil {
+				log.Printf("[Err] Failed to parse seed %s: %s", seed, err)
+				return
+			}
+
+			crawler.FullCrawl(domain, seed, 100)
+
+			fmt.Println("Get domain term frequceny ...", domain.RootDomain)
+			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			fmt.Println("Analyzing Website Character ...", domain.RootDomain)
+			analyzer.ComputeWebsiteCharacterV3(websiteId, termFreq)
+			fmt.Println("Analyzing Website Values ... ", domain.RootDomain)
+			analyzer.ComputeWebsiteValuesV3(websiteId, termFreq)
+			fmt.Println("Analyzing Website Cloud ...", domain.RootDomain)
+			analyzer.ComputeWebsiteWordcloudV3(websiteId, termFreq)
+		}()
+	})
+	/*
+	 * V2 : for old dashboard, will be deprecated soon
+	 */
+	router.POST("/v2/cralwer/crawldomain", func(c *gin.Context) {
 	})
 	router.GET("/v2/test", func(c *gin.Context) {
 		domain, _ := domainutil.ParseFromHost("pic-collage.com")
 		seed := "http://pic-collage.com"
 		crawler.FullCrawl(domain, seed, 100)
-		//rootDomain := "bluenile.com"
-		//tf := analyzer.GetDomainTermFrequency(rootDomain, []string{})
-		//fmt.Println(tf)
 	})
 	router.POST("/v2/crawler/crawldomain", func(c *gin.Context) {
 		c.Request.ParseForm()
-
-		//rawDomain := c.Request.Form.Get("domain")
-		//domainId := c.Request.Form.Get("domainId")
-		//domain, err := domainutil.ParseFromHost(rawDomain)
 		go func() {
 		}()
 	})
@@ -111,20 +163,6 @@ func main() {
 				return
 			}
 
-			//FIXME implement a single crawl method
-			/*
-				for _, weightedUrl := range weightedUrls {
-					weightedUrl := strings.TrimRight(weightedUrl, "/")
-					resp, err := http.Head(weightedUrl)
-					if err != nil {
-						log.Printf("[Err] Head %s: %s", seed, err)
-						//return
-						continue
-					}
-					u := resp.Request.URL.String()
-					crawler.FullCrawl(domain, u, 1)
-				}
-			*/
 			crawler.FullCrawl(domain, seed, 100)
 
 			fmt.Println("Get domain term frequceny ...", domain.RootDomain)

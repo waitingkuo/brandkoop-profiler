@@ -704,3 +704,172 @@ func ComputeTwitterWordcloudV2(twitterId string, termFreq map[string]float64) {
 	//fmt.Println(mgoUpdate)
 
 }
+
+/*
+ * v3
+ */
+
+func ComputeWebsiteCharacterV3(websiteId string, termFreq map[string]float64) {
+
+	mgoUpdate := bson.M{"$set": bson.M{}}
+	for criteria, terms := range criteriaTerms {
+		freq := 0.0
+		for _, term := range terms {
+			f, ok := termFreq[term]
+			if ok {
+				freq += f
+			}
+		}
+		mgoUpdate["$set"].(bson.M)[criteria] = freq
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("characters").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+func ComputeTwitterCharacterV3(twitterId string, termFreq map[string]float64) {
+
+	mgoUpdate := bson.M{"$set": bson.M{}}
+	for criteria, terms := range criteriaTerms {
+		freq := 0.0
+		for _, term := range terms {
+			f, ok := termFreq[term]
+			if ok {
+				freq += f
+			}
+		}
+		mgoUpdate["$set"].(bson.M)[criteria] = freq
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("twitterCharacters").Update(bson.M{"twitterId": twitterId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+
+func ComputeWebsiteValuesV3(websiteId string, termFreq map[string]float64) {
+
+	type TraitScore struct {
+		Criteria  string `bson:"criteria"`
+		Trait     string `bson:"trait"`
+		Frequency int    `bson:"frequency"`
+	}
+	traitScores := []TraitScore{}
+	for criteria, traits := range criteriaTraits {
+		for _, trait := range traits {
+			freq := 0.0
+			for _, term := range traitTerms[trait] {
+				f, ok := termFreq[term]
+				if ok {
+					freq += f
+				}
+			}
+			if int(freq) > 0 {
+				traitScores = append(traitScores, TraitScore{
+					Criteria:  criteria,
+					Trait:     trait,
+					Frequency: int(freq),
+				})
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{
+			"traits": traitScores,
+		},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("values").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+func ComputeTwitterValuesV3(twitterId string, termFreq map[string]float64) {
+
+	type TraitScore struct {
+		Criteria  string `bson:"criteria"`
+		Trait     string `bson:"trait"`
+		Frequency int    `bson:"frequency"`
+	}
+	traitScores := []TraitScore{}
+	for criteria, traits := range criteriaTraits {
+		for _, trait := range traits {
+			freq := 0.0
+			for _, term := range traitTerms[trait] {
+				f, ok := termFreq[term]
+				if ok {
+					freq += f
+				}
+			}
+			if int(freq) > 0 {
+				traitScores = append(traitScores, TraitScore{
+					Criteria:  criteria,
+					Trait:     trait,
+					Frequency: int(freq),
+				})
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{
+			"traits": traitScores,
+		},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("twitterValues").Update(bson.M{"twitterId": twitterId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+
+func ComputeWebsiteWordcloudV3(websiteId string, termFreq map[string]float64) {
+
+	words := []Word{}
+	for criteria, terms := range criteriaTerms {
+		for _, term := range terms {
+			freq, ok := termFreq[term]
+			if ok {
+				if int(freq) > 0 {
+					words = append(words, Word{term, int(freq), criteria})
+				}
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{"words": words},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("wordclouds").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+
+}
+func ComputeTwitterWordcloudV3(twitterId string, termFreq map[string]float64) {
+
+	words := []Word{}
+	for criteria, terms := range criteriaTerms {
+		for _, term := range terms {
+			freq, ok := termFreq[term]
+			if ok {
+				if int(freq) > 0 {
+					words = append(words, Word{term, int(freq), criteria})
+				}
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{"words": words},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("twitterWordclouds").Update(bson.M{"twitterId": twitterId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+
+}
