@@ -873,3 +873,14 @@ func ComputeTwitterWordcloudV3(twitterId string, termFreq map[string]float64) {
 	//fmt.Println(mgoUpdate)
 
 }
+
+func SetWebsiteProfiled(websiteId string) {
+	mgoUpdate := bson.M{
+		"$set": bson.M{"profiled": true},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("websites").Update(bson.M{"_id": websiteId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+}

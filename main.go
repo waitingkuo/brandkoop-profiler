@@ -39,6 +39,7 @@ func main() {
 			analyzer.ComputeWebsiteValuesV3(websiteId, termFreq)
 			fmt.Println("Analyzing Website Cloud ...", domain.RootDomain)
 			analyzer.ComputeWebsiteWordcloudV3(websiteId, termFreq)
+			analyzer.SetWebsiteProfiled(websiteId)
 			fmt.Println("Done ...")
 		}()
 	})
@@ -79,6 +80,8 @@ func main() {
 			analyzer.ComputeWebsiteValuesV3(websiteId, termFreq)
 			fmt.Println("Analyzing Website Cloud ...", domain.RootDomain)
 			analyzer.ComputeWebsiteWordcloudV3(websiteId, termFreq)
+			analyzer.SetWebsiteProfiled(websiteId)
+			fmt.Println("Done ...")
 		}()
 	})
 	/*
