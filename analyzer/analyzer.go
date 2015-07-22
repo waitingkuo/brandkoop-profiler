@@ -725,7 +725,7 @@ func ComputeWebsiteCharacterV3(websiteId string, termFreq map[string]float64) {
 
 	session := mgoSession.Copy()
 	defer session.Close()
-	session.DB("meteor").C("characters").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
+	session.DB("meteor").C("websiteCharacters").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
 	fmt.Println(mgoUpdate)
 
 }
@@ -784,7 +784,7 @@ func ComputeWebsiteValuesV3(websiteId string, termFreq map[string]float64) {
 
 	session := mgoSession.Copy()
 	defer session.Close()
-	session.DB("meteor").C("values").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
+	session.DB("meteor").C("websiteValues").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
 	fmt.Println(mgoUpdate)
 
 }
@@ -846,7 +846,7 @@ func ComputeWebsiteWordcloudV3(websiteId string, termFreq map[string]float64) {
 
 	session := mgoSession.Copy()
 	defer session.Close()
-	session.DB("meteor").C("wordclouds").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
+	session.DB("meteor").C("websiteWordclouds").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
 	//fmt.Println(mgoUpdate)
 
 }
