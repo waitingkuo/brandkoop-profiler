@@ -884,3 +884,79 @@ func SetWebsiteProfiled(websiteId string) {
 	session.DB("meteor").C("websites").Update(bson.M{"_id": websiteId}, mgoUpdate)
 	//fmt.Println(mgoUpdate)
 }
+
+func ComputeInstantProfileCharacterV3(profileId string, termFreq map[string]float64) {
+
+	mgoUpdate := bson.M{
+		"$set": bson.M{
+			"character": bson.M{},
+		},
+	}
+
+	for criteria, terms := range criteriaTerms {
+		freq := 0.0
+		for _, term := range terms {
+			f, ok := termFreq[term]
+			if ok {
+				freq += f
+			}
+		}
+		mgoUpdate["$set"].(bson.M)["character"].(bson.M)[criteria] = freq
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("instantProfiles").Update(bson.M{"_id": profileId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+
+func ComputeInstantProfileValuesV3(profileId string, termFreq map[string]float64) {
+
+	type TraitScore struct {
+		Criteria  string `bson:"criteria"`
+		Trait     string `bson:"trait"`
+		Frequency int    `bson:"frequency"`
+	}
+	traitScores := []TraitScore{}
+	for criteria, traits := range criteriaTraits {
+		for _, trait := range traits {
+			freq := 0.0
+			for _, term := range traitTerms[trait] {
+				f, ok := termFreq[term]
+				if ok {
+					freq += f
+				}
+			}
+			if int(freq) > 0 {
+				traitScores = append(traitScores, TraitScore{
+					Criteria:  criteria,
+					Trait:     trait,
+					Frequency: int(freq),
+				})
+			}
+		}
+	}
+	mgoUpdate := bson.M{
+		"$set": bson.M{
+			"values": traitScores,
+		},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("instantProfiles").Update(bson.M{"_id": profileId}, mgoUpdate)
+	fmt.Println(mgoUpdate)
+
+}
+
+func SetInstantProfileProfiled(profileId string) {
+	mgoUpdate := bson.M{
+		"$set": bson.M{"profiled": true},
+	}
+
+	session := mgoSession.Copy()
+	defer session.Close()
+	session.DB("meteor").C("instantProfiles").Update(bson.M{"_id": profileId}, mgoUpdate)
+	//fmt.Println(mgoUpdate)
+}

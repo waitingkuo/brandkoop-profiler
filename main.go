@@ -43,6 +43,46 @@ func main() {
 			fmt.Println("Done ...")
 		}()
 	})
+	router.POST("/v3/instantprofiler/profilewebsite", func(c *gin.Context) {
+		c.Request.ParseForm()
+		rawDomain := c.Request.Form.Get("domain")
+		profileId := c.Request.Form.Get("profileId")
+		domain, err := domainutil.ParseFromHost(rawDomain)
+		if err != nil {
+			fmt.Println("[ERROR] failed to parse domain ", rawDomain)
+			return
+		}
+		fmt.Println(domain)
+		go func() {
+			//crawl FIXME to move to another function
+			seed := "http://" + rawDomain
+			resp, err := http.Head("http://" + rawDomain)
+			if err != nil {
+				log.Printf("[Err] Head %s: %s", seed, err)
+				return
+			}
+			seed = resp.Request.URL.String()
+
+			domain, err := domainutil.ParseFromRawURL(seed)
+			if err != nil {
+				log.Printf("[Err] Failed to parse seed %s: %s", seed, err)
+				return
+			}
+
+			crawler.InstantCrawl(domain, seed, 100)
+
+			fmt.Println("Get domain term frequceny ...", domain.RootDomain)
+			termFreq := analyzer.GetDomainTermFrequency(domain.RootDomain, []string{})
+			fmt.Println("Analyzing Instant Profile Character ...", domain.RootDomain)
+			analyzer.ComputeInstantProfileCharacterV3(profileId, termFreq)
+			fmt.Println("Analyzing Instant Profile Values ... ", domain.RootDomain)
+			analyzer.ComputeInstantProfileValuesV3(profileId, termFreq)
+			//fmt.Println("Analyzing Instant Profile Cloud ...", domain.RootDomain)
+			//analyzer.ComputeInstantProfileWordcloudV3(profileId, termFreq)
+			analyzer.SetInstantProfileProfiled(profileId)
+			fmt.Println("Done ...")
+		}()
+	})
 	router.POST("/v3/profiler/profilewebsite", func(c *gin.Context) {
 		c.Request.ParseForm()
 

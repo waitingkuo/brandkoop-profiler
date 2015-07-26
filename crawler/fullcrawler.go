@@ -13,24 +13,44 @@ import (
 )
 
 type FullCrawler struct {
-	Mu     sync.Mutex
-	Mux    *fetchbot.Mux
-	Dup    map[string]bool
-	Domain *domainutil.Domain
-	Seed   string
-	Limit  int
-	Count  int
+	Mu            sync.Mutex
+	Mux           *fetchbot.Mux
+	Dup           map[string]bool
+	Domain        *domainutil.Domain
+	Seed          string
+	Limit         int
+	Count         int
+	CrawlDelay    time.Duration
+	WorkerIdleTTL time.Duration
+}
+
+func NewInstantCrawler(domain *domainutil.Domain, seed string, limit int) *FullCrawler {
+
+	cw := &FullCrawler{
+		Mux:           fetchbot.NewMux(),
+		Dup:           make(map[string]bool),
+		Domain:        domain,
+		Seed:          seed,
+		Limit:         limit,
+		Count:         0,
+		CrawlDelay:    time.Millisecond * 30,
+		WorkerIdleTTL: time.Second * 3,
+	}
+
+	return cw
 }
 
 func NewFullCrawler(domain *domainutil.Domain, seed string, limit int) *FullCrawler {
 
 	cw := &FullCrawler{
-		Mux:    fetchbot.NewMux(),
-		Dup:    make(map[string]bool),
-		Domain: domain,
-		Seed:   seed,
-		Limit:  limit,
-		Count:  0,
+		Mux:           fetchbot.NewMux(),
+		Dup:           make(map[string]bool),
+		Domain:        domain,
+		Seed:          seed,
+		Limit:         limit,
+		Count:         0,
+		CrawlDelay:    time.Second * 1,
+		WorkerIdleTTL: time.Second * 10,
 	}
 
 	return cw
@@ -112,8 +132,8 @@ func (cw *FullCrawler) Start() {
 	h := logHandler(cw.Mux)
 
 	f := fetchbot.New(h)
-	f.CrawlDelay = time.Second * 1
-	f.WorkerIdleTTL = time.Second * 10
+	f.CrawlDelay = cw.CrawlDelay
+	f.WorkerIdleTTL = cw.WorkerIdleTTL
 	f.AutoClose = true
 
 	q := f.Start()
