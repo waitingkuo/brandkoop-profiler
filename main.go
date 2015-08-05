@@ -124,6 +124,24 @@ func main() {
 			fmt.Println("Done ...")
 		}()
 	})
+
+	router.POST("/v3/profiler/profiletwitter", func(c *gin.Context) {
+		c.Request.ParseForm()
+
+		twitterId := c.Request.Form.Get("twitterId")
+		screenName := c.Request.Form.Get("screenName")
+
+		termFreq := analyzer.GetTwitterTermFrequency(screenName)
+		fmt.Println("Analyzing Twitter Character ...")
+		analyzer.ComputeTwitterCharacterV3(twitterId, termFreq)
+		fmt.Println("Analyzing Twitter Values ...")
+		analyzer.ComputeTwitterValuesV3(twitterId, termFreq)
+		fmt.Println("Analyzing Twitter Wordcloud ...")
+		analyzer.ComputeTwitterWordcloudV3(twitterId, termFreq)
+		fmt.Println("Analyzing Done ...")
+
+	})
+
 	/*
 	 * V2 : for old dashboard, will be deprecated soon
 	 */
