@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	//"net/url"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/waitingkuo/brandkoop-profiler/analyzer"
 	"github.com/waitingkuo/brandkoop-profiler/crawler"
 	//"github.com/waitingkuo/brandkoop-profiler/es"
+	//"github.com/waitingkuo/brandkoop-profiler/Godeps/_workspace/src/github.com/waitingkuo/domainutil"
 	"github.com/waitingkuo/domainutil"
 	"log"
 	"net/http"
