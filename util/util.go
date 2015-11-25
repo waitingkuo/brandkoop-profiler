@@ -46,7 +46,7 @@ func ExtractContentFromDoc(url string, doc *goquery.Document) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	article := contentExtractor.ExtractFromRawHtml(url, rawHtml)
+	article := contentExtractor.ExtractFromRawHTML(url, rawHtml)
 
 	return article.CleanedText, nil
 }
