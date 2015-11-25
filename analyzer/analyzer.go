@@ -65,6 +65,7 @@ func init() {
 	}
 
 	mgoSession, err = mgo.Dial(mongoURL)
+	fmt.Println(mongoURL)
 	if err != nil {
 		panic(err)
 	}
@@ -712,6 +713,7 @@ func ComputeTwitterWordcloudV2(twitterId string, termFreq map[string]float64) {
 func ComputeWebsiteCharacterV3(websiteId string, termFreq map[string]float64) {
 
 	mgoUpdate := bson.M{"$set": bson.M{}}
+	mgoInsert := bson.M{"_id": util.MeteorId(), "websiteId": websiteId, "time": time.Now().UTC()}
 	for criteria, terms := range criteriaTerms {
 		freq := 0.0
 		for _, term := range terms {
@@ -721,12 +723,15 @@ func ComputeWebsiteCharacterV3(websiteId string, termFreq map[string]float64) {
 			}
 		}
 		mgoUpdate["$set"].(bson.M)[criteria] = freq
+		mgoInsert[criteria] = freq
 	}
 
 	session := mgoSession.Copy()
 	defer session.Close()
 	session.DB("meteor").C("websiteCharacters").Update(bson.M{"websiteId": websiteId}, mgoUpdate)
 	fmt.Println(mgoUpdate)
+
+	session.DB("meteor").C("historicalWebsiteCharacters").Insert(mgoInsert)
 
 }
 func ComputeTwitterCharacterV3(twitterId string, termFreq map[string]float64) {
